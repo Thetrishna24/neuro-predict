@@ -3,7 +3,7 @@ import sqlite3, json, os
 from datetime import datetime
 
 app = Flask(__name__)
-DB = 'neuro.db'
+DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'neuro.db')
 
 #db
 def get_db():

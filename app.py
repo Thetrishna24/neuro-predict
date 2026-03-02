@@ -1,9 +1,3 @@
-"""
-NeuroPredict — Flask Backend
-Run with:  python app.py
-Open:      http://localhost:5000
-"""
-
 from flask import Flask, request, jsonify, render_template
 import sqlite3, json, os
 from datetime import datetime
@@ -11,7 +5,7 @@ from datetime import datetime
 app = Flask(__name__)
 DB = 'neuro.db'
 
-# ── Database ──────────────────────────────────────────────────────────────────
+#db
 def get_db():
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row

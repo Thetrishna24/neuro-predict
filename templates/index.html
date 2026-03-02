@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroPredict</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+<canvas class="neural-bg" id="neuralCanvas"></canvas>
+
+<header>
+  <div class="logo">Neuro<span>Predict</span></div>
+  <div class="header-right">
+    <div class="stat-pill" id="headerStats">Loading...</div>
+  </div>
+</header>
+
+<!-- Main nav -->
+<nav class="main-nav">
+  <button class="nav-btn active" onclick="showPage('assess')">&#9881; Assess</button>
+  <button class="nav-btn" onclick="showPage('patients')">&#128101; Patients</button>
+  <button class="nav-btn" onclick="showPage('history')">&#128200; History</button>
+</nav>
+
+<div class="container">
+
+  <!-- ═══ ASSESS PAGE ═══ -->
+  <div id="page-assess" class="page active">
+    <div class="hero">
+      <h1>Neurodegenerative Disease<br><em>Risk Assessment</em></h1>
+      <p>Complete the profile below and save results directly to the patient database.</p>
+    </div>
+
+    <!-- Patient selector -->
+    <div class="patient-bar">
+      <div class="patient-bar-left">
+        <label>Patient</label>
+        <select id="patientSelect" onchange="onPatientChange()">
+          <option value="">— Select or create patient —</option>
+        </select>
+      </div>
+      <button class="btn-secondary" onclick="openNewPatient()">+ New Patient</button>
+    </div>
+
+    <!-- Disease tabs -->
+    <div class="disease-tabs">
+      <button class="tab active" onclick="setDisease('alzheimers',this)">Alzheimer's</button>
+      <button class="tab" onclick="setDisease('parkinsons',this)">Parkinson's</button>
+      <button class="tab" onclick="setDisease('als',this)">ALS</button>
+      <button class="tab" onclick="setDisease('huntingtons',this)">Huntington's</button>
+      <button class="tab" onclick="setDisease('msa',this)">MSA / PSP</button>
+    </div>
+
+    <div class="layout">
+      <!-- Form -->
+      <div class="panel">
+        <div class="loading-bar" id="loadingBar"></div>
+        <div class="section-title">Patient Profile</div>
+
+        <div class="field-group">
+          <div class="field-label"><label>Age</label><span class="info" id="ageVal">65 years</span></div>
+          <input type="range" min="40" max="95" value="65" id="age"
+            oninput="document.getElementById('ageVal').textContent=this.value+' years'">
+          <div class="slider-labels"><span>40</span><span>95</span></div>
+        </div>
+
+        <div class="two-col">
+          <div class="field-group">
+            <div class="field-label"><label>Sex</label></div>
+            <select id="sex">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <div class="field-label"><label>Education</label></div>
+            <select id="education">
+              <option value="less_hs">Less than high school</option>
+              <option value="hs">High school / GED</option>
+              <option value="some_college">Some college</option>
+              <option value="bachelors" selected>Bachelor's degree</option>
+              <option value="graduate">Graduate degree</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:1.5rem">Cognitive Symptoms</div>
+        <div class="checkbox-grid" id="symptomGrid"></div>
+
+        <div class="section-title" style="margin-top:1.5rem">Behavioral &amp; Motor Signs</div>
+        <div class="checkbox-grid" id="motorGrid"></div>
+
+        <div class="section-title" style="margin-top:1.5rem">Genetic &amp; Family History</div>
+        <div class="checkbox-grid" id="geneticGrid"></div>
+
+        <div class="section-title" style="margin-top:1.5rem">
+          Imaging &amp; Biomarkers <span style="font-size:.6rem;color:var(--muted)">(optional)</span>
+        </div>
+        <div class="biomarker-row" id="biomarkerRow"></div>
+
+        <div class="field-group" style="margin-top:1.5rem">
+          <div class="field-label"><label>Clinical Notes</label></div>
+          <textarea id="clinicalNotes" placeholder="Add clinical observations, context, or follow-up notes..." rows="3"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-analyze" onclick="analyze()">Analyze Risk &rarr;</button>
+          <button class="btn-save" id="btnSave" onclick="saveAssessment()" disabled>&#128190; Save </button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="results-panel" id="resultsPanel">
+        <div class="placeholder">
+          <div class="icon">&#129504;</div>
+          <p>Complete the patient profile and click <strong>Analyze Risk</strong> to generate an assessment, then <strong>Save to DB</strong> to store it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PATIENTS PAGE ═══ -->
+  <div id="page-patients" class="page">
+    <div class="page-header">
+      <h2>Patient Registry</h2>
+      <button class="btn-secondary" onclick="openNewPatient()">+ New Patient</button>
+    </div>
+    <div id="patientsList" class="cards-grid">
+      <div class="loading-msg">Loading patients...</div>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORY PAGE ═══ -->
+  <div id="page-history" class="page">
+    <div class="page-header">
+      <h2>Assessment History</h2>
+      <div class="stats-row" id="statsRow"></div>
+    </div>
+    <div class="history-filter">
+      <select id="historyPatient" onchange="loadHistory()">
+        <option value="">All Patients</option>
+      </select>
+      <select id="historyDisease" onchange="loadHistory()">
+        <option value="">All Diseases</option>
+        <option value="alzheimers">Alzheimer's</option>
+        <option value="parkinsons">Parkinson's</option>
+        <option value="als">ALS</option>
+        <option value="huntingtons">Huntington's</option>
+        <option value="msa">MSA / PSP</option>
+      </select>
+    </div>
+    <div id="historyList"></div>
+  </div>
+
+</div>
+
+<!-- New Patient Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">New Patient</div>
+    <div class="field-group">
+      <div class="field-label"><label>Full Name *</label></div>
+      <input type="text" id="newPatientName" placeholder="e.g. Jane Smith">
+    </div>
+    <div class="field-group">
+      <div class="field-label"><label>Date of Birth</label></div>
+      <input type="date" id="newPatientDob">
+    </div>
+    <div class="field-group">
+      <div class="field-label"><label>Notes</label></div>
+      <textarea id="newPatientNotes" placeholder="Optional intake notes..." rows="2"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-analyze" onclick="createPatient()">Create Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tech Cards Section -->
+<div class="container" style="padding-top:0">
+  <div class="tech-section">
+    <div class="tech-title">Emerging Technologies in Neurological Diagnosis</div>
+    <p class="tech-subtitle">Cutting-edge tools reshaping how we detect, predict, and treat neurodegenerative disease.</p>
+    <div class="tech-grid" id="techGrid"></div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>&#9888; Research &amp; Educational Prototype Only.</strong>
+    This tool is not a medical device and does not provide clinical diagnoses. Risk scores are computed from weighted heuristics for educational exploration. All clinical decisions must be made by qualified medical professionals. Consult a neurologist for evaluation of neurological symptoms.
+  </div>
+</div>
+
+<script src="/static/js/disease.js"></script>
+<script src="/static/js/canvas.js"></script>
+<script src="/static/js/app.js"></script>
+<script>
+var TECHS = [
+  {icon:'&#129514;',title:'Functional MRI (fMRI)',text:'Maps real-time brain activity via blood-oxygenation signals. Identifies default mode network disruption years before Alzheimer\'s symptoms appear.',tag:'Neuroimaging',color:'rgba(0,212,255,.12)',tc:'#00d4ff'},
+  {icon:'&#10024;',title:'Amyloid &amp; Tau PET',text:'Radiolabeled tracers visualize amyloid plaques and neurofibrillary tangles in living patients — now pivotal for early AD diagnosis and clinical trial enrollment.',tag:'Molecular Imaging',color:'rgba(124,58,237,.12)',tc:'#7c3aed'},
+  {icon:'&#129516;',title:'Liquid Biopsy / CSF Biomarkers',text:'Plasma NfL, p-tau217, Aβ42/40 ratio enable minimally invasive early detection. Blood-based tests now FDA-cleared for Alzheimer\'s.',tag:'Biomarkers',color:'rgba(16,185,129,.12)',tc:'#10b981'},
+  {icon:'&#129302;',title:'Deep Learning on Neuroimaging',text:'3D CNNs trained on ADNI data detect hippocampal atrophy patterns with AUC >0.90. Voxel-based morphometry identifies subtle changes years pre-symptom.',tag:'AI / ML',color:'rgba(245,158,11,.12)',tc:'#f59e0b'},
+  {icon:'&#9889;',title:'EEG &amp; Quantitative EEG',text:'Resting-state EEG power spectra show characteristic slowing in AD and CJD. qEEG combined with ML achieves high sensitivity for dementia subtypes.',tag:'Electrophysiology',color:'rgba(0,212,255,.12)',tc:'#00d4ff'},
+  {icon:'&#129514;',title:'Multi-Omics Integration',text:'Combining genomics, proteomics, metabolomics, and transcriptomics through ML to identify disease subtypes and novel drug targets for ALS and Huntington\'s.',tag:'Systems Biology',color:'rgba(124,58,237,.12)',tc:'#7c3aed'},
+  {icon:'&#128065;',title:'Retinal Imaging as Biomarker',text:'The retina is a window to the brain. Amyloid deposits and vessel changes detectable by OCT/OCTA may enable low-cost non-invasive screening for AD.',tag:'Emerging',color:'rgba(16,185,129,.12)',tc:'#10b981'},
+  {icon:'&#128241;',title:'Digital Biomarkers',text:'Speech analysis, gait monitoring via wearables, and keystroke dynamics capture real-world cognitive and motor decline continuously and passively.',tag:'Digital Health',color:'rgba(245,158,11,.12)',tc:'#f59e0b'},
+  {icon:'&#128138;',title:'Gene Therapy &amp; ASOs',text:'Antisense oligonucleotides (tofersen for SOD1-ALS) and CRISPR approaches target root causes. HTT-lowering strategies are in clinical trials for Huntington\'s.',tag:'Therapeutics',color:'rgba(239,68,68,.12)',tc:'#ef4444'}
+];
+window.addEventListener('load', function() {
+  var grid = document.getElementById('techGrid');
+  if (grid) {
+    grid.innerHTML = TECHS.map(function(t) {
+      return '<div class="tech-card" style="background:'+t.color+'">' +
+        '<div class="tech-card-icon">'+t.icon+'</div>' +
+        '<h3>'+t.title+'</h3><p>'+t.text+'</p>' +
+        '<span class="tech-tag" style="background:'+t.color+';color:'+t.tc+';border:1px solid '+t.tc+'40">'+t.tag+'</span>' +
+        '</div>';
+    }).join('');
+  }
+});
+</script>
+</body>
+</html>
